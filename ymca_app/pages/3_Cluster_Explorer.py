@@ -16,37 +16,57 @@ def load_data():
 
 df = load_data()
 
-# Check if cluster column exists
-if "cluster_label" not in df.columns:
-    st.error("⚠️ The dataset does not contain a `cluster_label` column.")
-    st.stop()
+# ---- CONFIRMED cluster column ----
+cluster_column = "cluster_label"
+st.success(f"🎯 Cluster Column Detected: `{cluster_column}`")
 
-# Sidebar filter
-cluster_options = sorted(df["cluster_label"].unique())
+# Sidebar dropdown
+cluster_options = sorted(df[cluster_column].unique())
 selected_cluster = st.sidebar.selectbox("Select Cluster Group:", cluster_options)
 
-st.subheader(f"📍 Showing Cluster: **{selected_cluster}**")
+# Filter dataframe
+cluster_df = df[df[cluster_column] == selected_cluster]
 
-cluster_df = df[df["cluster_label"] == selected_cluster]
+st.subheader(f"📍 Cluster {selected_cluster} Summary")
 
-# KPIs
+# =========================
+# KPI Cards
+# =========================
 col1, col2, col3 = st.columns(3)
+
 col1.metric("👥 Members in Cluster", len(cluster_df))
-col2.metric("📅 Avg Age", round(cluster_df["age"].mean(), 2) if "age" in cluster_df.columns else "N/A")
-col3.metric("💰 Avg Fee Loss", round(cluster_df["fee_loss"].mean(), 2) if "fee_loss" in cluster_df.columns else "N/A")
 
-# Chart: Age Distribution
-if "age" in cluster_df.columns:
-    st.write("📊 Age Distribution")
-    fig1 = px.histogram(cluster_df, x="age", title="Age Distribution", nbins=20)
-    st.plotly_chart(fig1, use_container_width=True)
+# Age available? No exact age column exists, but we have category
+if "application_contact_age_category" in df.columns:
+    most_common_age_group = cluster_df["application_contact_age_category"].mode()[0]
+    col2.metric("👶 Most Common Age Group", most_common_age_group)
+else:
+    col2.metric("👶 Age Group", "N/A")
 
-# Chart: Membership Type Breakdown
-if "membership_subscription_type" in cluster_df.columns:
-    st.write("📌 Membership Type Breakdown")
-    fig2 = px.pie(cluster_df, names="membership_subscription_type", title="Membership Type Split")
-    st.plotly_chart(fig2, use_container_width=True)
+# Fee loss metric
+if "fee_loss" in df.columns:
+    col3.metric("💰 Avg Fee Loss", round(cluster_df["fee_loss"].mean(), 2))
+else:
+    col3.metric("💰 Avg Fee Loss", "N/A")
 
-# Show dataset
-st.write("📄 Members in this Cluster")
+
+# =========================
+# Charts
+# =========================
+
+st.write("### 📈 Membership Fee Distribution")
+fig1 = px.box(cluster_df, y="membership_fee", title=f"Membership Fee Distribution in Cluster {selected_cluster}")
+st.plotly_chart(fig1, use_container_width=True)
+
+st.write("### 🧠 Reason for Hold Breakdown")
+fig2 = px.bar(
+    cluster_df["reason_for_hold"].value_counts(),
+    title="Most Common Hold Reasons"
+)
+st.plotly_chart(fig2, use_container_width=True)
+
+# =========================
+# Table Preview
+# =========================
+st.write("### 📄 Members in This Cluster")
 st.dataframe(cluster_df.head(50))
