@@ -13,51 +13,68 @@ def load_data():
 
     st.write("📌 Using CSV path:", str(data_path))
 
-    df = pd.read_csv(data_path)
+    # Auto-detect delimiter (tab, comma, etc.)
+    try:
+        df = pd.read_csv(data_path, sep=None, engine="python")
+    except Exception:
+        # fallback in case auto-detect fails
+        df = pd.read_csv(data_path, delimiter="\t")
 
-    # Convert numeric columns safely
+    # Convert numeric-like values
     for col in df.columns:
         df[col] = pd.to_numeric(df[col], errors="ignore")
 
     return df
 
-df = load_data()
 
-# Show dataset columns for debugging
-st.write("🧾 Columns in dataset:", list(df.columns))
-
-# Detect cluster label column
-possible_names = ["cluster", "cluster_label", "labels", "segment"]
-cluster_column = None
-
-for name in possible_names:
-    if name in df.columns:
-        cluster_column = name
-        break
-
-if cluster_column:
-    st.success(f"🎯 Cluster Column Detected: **{cluster_column}**")
-else:
-    st.error("❌ No cluster column found.")
+# Load dataset
+try:
+    df = load_data()
+except Exception as e:
+    st.error(f"❌ Could not read file. Error: {e}")
     st.stop()
 
-# Cluster selection dropdown
-clusters = sorted(df[cluster_column].unique())
-selected_cluster = st.selectbox("Select Cluster", clusters)
+# Show columns
+st.subheader("🧾 Columns in dataset:")
+st.write(list(df.columns))
 
+# Detect cluster column
+possible_cluster_cols = [
+    col for col in df.columns if "cluster" in col.lower()
+]
+
+if not possible_cluster_cols:
+    st.error("❌ No cluster column found in the dataset.")
+    st.stop()
+
+cluster_column = possible_cluster_cols[0]  # pick the first match
+
+st.success(f"🎯 Cluster Column Detected: **{cluster_column}**")
+
+# Dropdown to select cluster
+unique_clusters = sorted(df[cluster_column].unique())
+selected_cluster = st.selectbox("📌 Select a Cluster", unique_clusters)
+
+# Filter dataset by selected cluster
 filtered_df = df[df[cluster_column] == selected_cluster]
 
-st.subheader("📊 Filtered Dataset Preview")
-st.dataframe(filtered_df.head())
+st.subheader("📊 Filtered Data Preview")
+st.write(filtered_df.head(10))
 
-# Identify numeric columns
-numeric_cols = filtered_df.select_dtypes(include="number").columns.tolist()
+# Check for numeric columns for visualization
+numeric_cols = filtered_df.select_dtypes(include=["float64", "int64"]).columns.tolist()
 
 if not numeric_cols:
-    st.warning("⚠ No numeric columns available for visualization.")
+    st.warning("⚠️ No numeric columns available for visualization.")
 else:
-    st.subheader("📈 Distribution of Numeric Features")
-    feature = st.selectbox("Choose a feature to plot", numeric_cols)
+    st.subheader("📈 Numeric Feature Distribution")
+    selected_feature = st.selectbox("Pick a numeric column to visualize:", numeric_cols)
 
-    fig = px.histogram(filtered_df, x=feature, nbins=20, title=f"{feature} Distribution")
+    fig = px.histogram(
+        filtered_df,
+        x=selected_feature,
+        nbins=20,
+        title=f"Distribution of '{selected_feature}' for Cluster {selected_cluster}",
+        color_discrete_sequence=['#0174BE']
+    )
     st.plotly_chart(fig, use_container_width=True)
