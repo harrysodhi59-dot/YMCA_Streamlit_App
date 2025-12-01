@@ -6,24 +6,26 @@ st.title("📄 Data Overview")
 
 @st.cache_data
 def load_data():
-    # Path of THIS file: ymca_app/pages/1_Data_Overview.py
+    # Get folder where THIS file exists → /ymca_app/pages
     here = Path(__file__).resolve()
-
-    # Go up one level → ymca_app
-    base_dir = here.parent.parent  
-
-    # Correct path to CSV (not inside 'data' folder anymore)
+    
+    # Go up to parent folder → /ymca_app
+    base_dir = here.parent.parent
+    
+    # CSV file path
     csv_path = base_dir / "ymca_clusters.csv"
 
-    # Debug confirmation
-    st.write("📌 Using CSV path:", str(csv_path))
+    st.write("📌 Using CSV path:", csv_path)
 
     return pd.read_csv(csv_path)
 
+# Load
 df = load_data()
 
-st.write("### Sample Data")
+# Display preview
+st.write("### Sample Data Preview")
 st.dataframe(df.head())
 
-st.write(f"📊 Rows: {len(df)}")
-st.write(f"📁 Columns: {df.shape[1]}")
+# Dataset stats
+st.write(f"📊 **Total Rows:** {len(df)}")
+st.write(f"📁 **Total Columns:** {df.shape[1]}")
