@@ -5,7 +5,8 @@ st.title("📄 Data Overview")
 
 @st.cache_data
 def load_data():
-    return pd.read_csv("../data/ymca_clusters.csv")
+    return pd.read_csv("ymca_app/data/ymca_clusters.csv")
+
 import os
 st.write("📌 Current Working Directory:", os.getcwd())
 st.write("📂 Files in current directory:", os.listdir())
