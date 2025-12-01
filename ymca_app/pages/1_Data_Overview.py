@@ -7,7 +7,6 @@ st.title("📄 Data Overview")
 def load_data():
     return pd.read_csv("../data/ymca_clusters.csv")
 
-
 df = load_data()
 
 st.write("### Sample Data")
