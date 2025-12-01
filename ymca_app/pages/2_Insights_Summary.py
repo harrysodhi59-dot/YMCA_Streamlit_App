@@ -1,47 +1,54 @@
 import streamlit as st
 import pandas as pd
+from pathlib import Path
 
 st.title("📊 Insights Summary")
 
-# ------------ FIXED LOAD FUNCTION -----------
 @st.cache_data
 def load_data():
-    csv_path = "/mount/src/ymca_streamlit_app/ymca_app/data/ymca_clusters.csv"
-    st.write("📌 Using CSV path:", csv_path)
+    here = Path(__file__).resolve()
+    base_dir = here.parent.parent
+    csv_path = base_dir / "ymca_clusters.csv"
     return pd.read_csv(csv_path)
 
 df = load_data()
 
-# ------------------------
-# Calculations
-# ------------------------
-total_members = len(df)
+# Sidebar Filters
+st.sidebar.header("🔍 Filters")
 
-# Try to detect cluster column automatically
-cluster_cols = [c for c in df.columns if "cluster" in c.lower()]
-cluster_col = cluster_cols[0] if cluster_cols else None
+# Cluster Filter (if column exists)
+cluster_col = "clusters" if "clusters" in df.columns else None
 
-unique_clusters = df[cluster_col].nunique() if cluster_col else "N/A"
-most_common_cluster = df[cluster_col].mode()[0] if cluster_col else "N/A"
+if cluster_col:
+    selected_clusters = st.sidebar.multiselect(
+        "Select Clusters:", 
+        options=sorted(df[cluster_col].unique()), 
+        default=sorted(df[cluster_col].unique())
+    )
+    df_filtered = df[df[cluster_col].isin(selected_clusters)]
+else:
+    df_filtered = df
 
-# Detect age column
-age_cols = [c for c in df.columns if "age" in c.lower()]
-age_col = age_cols[0] if age_cols else None
-
-average_age = round(df[age_col].mean(), 1) if age_col else "N/A"
-
-
-# ------------------------
-# Summary UI
-# ------------------------
+# Metrics Row
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("👥 Total Members", f"{total_members:,}")
-col2.metric("🔢 Unique Clusters", unique_clusters)
-col3.metric("🏷 Most Common Cluster", most_common_cluster)
-col4.metric("📅 Avg Age", average_age)
+col1.metric("👤 Total Members", len(df_filtered))
+col2.metric("📈 Unique Clusters", df_filtered[cluster_col].nunique() if cluster_col else "N/A")
+col3.metric("🎯 Most Common Cluster", df_filtered[cluster_col].mode()[0] if cluster_col else "N/A")
 
+# Average Age (if column exists)
+age_col = None
+for col in ["Age", "age", "member_age"]:
+    if col in df.columns:
+        age_col = col
+        break
+
+if age_col:
+    avg_age = round(df_filtered[age_col].mean(), 1)
+    col4.metric("📅 Avg Age", avg_age)
+else:
+    col4.metric("📅 Avg Age", "N/A")
 
 st.write("---")
-st.subheader("🔍 Dataset Preview")
-st.dataframe(df.head(20))
+st.write("### 💡 Filtered Dataset Preview")
+st.dataframe(df_filtered.head())
