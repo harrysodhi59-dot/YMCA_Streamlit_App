@@ -1,100 +1,170 @@
 import streamlit as st
-from PIL import Image
-from io import BytesIO
-import requests
 
-# ==========================
-# PAGE CONFIGURATION
-# ==========================
+# ----------------------------------------------------
+# GLOBAL PAGE CONFIGURATION
+# ----------------------------------------------------
 st.set_page_config(
     page_title="Data Alchemists Analytics Platform",
-    layout="wide"
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# ==========================
-# LOAD YMCA LOGO FROM URL
-# ==========================
-logo_url = "https://lethbridgeymca.ca/wp-content/uploads/2020/08/YMCA-Logo.png"
-
-try:
-    response = requests.get(logo_url)
-    logo = Image.open(BytesIO(response.content))
-except:
-    logo = None
-
-
-# ==========================
-# CUSTOM STYLES (LIGHT RED SIDEBAR)
-# ==========================
-st.markdown(
-    """
-    <style>
-        /* Sidebar background */
-        [data-testid="stSidebar"] {
-            background-color: #ffe0e0 !important;
-        }
-
-        /* Sidebar title styling */
-        .sidebar-title {
-            font-size: 26px;
-            font-weight: 700;
-            color: #8b0000;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        /* Horizontal divider */
-        .styled-hr {
-            border: 1px solid #aa0000;
-            margin-top: 10px;
-            margin-bottom: 20px;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ==========================
-# SIDEBAR LAYOUT
-# ==========================
+# ----------------------------------------------------
+# SIDEBAR BRANDING (Header inside sidebar)
+# ----------------------------------------------------
 with st.sidebar:
+    st.markdown("""
+        <h2 style='font-weight:700; margin-bottom:0px; color:#4A0000;'>
+            Data Alchemists<br>Analytics Platform
+        </h2>
+        <p style='font-size:14px; margin-top:2px; margin-bottom:5px; color:#4A0000;'>
+            YMCA Revenue Intelligence Dashboard
+        </p>
+        <hr style='margin:10px 0 20px 0; border-color:#FFBABA;'>
+    """, unsafe_allow_html=True)
 
-    # Dashboard name
-    st.markdown("<div class='sidebar-title'>Data Alchemists</div>", unsafe_allow_html=True)
+# ----------------------------------------------------
+# GLOBAL STYLING (CSS)
+# ----------------------------------------------------
+st.markdown("""
+<style>
 
-    # YMCA logo
-    if logo:
-        st.image(logo, use_column_width=True)
-    else:
-        st.warning("⚠ Unable to load YMCA logo.")
+    /* Hide Streamlit menu + footer */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
 
-    st.markdown("<hr class='styled-hr'>", unsafe_allow_html=True)
+    /* Page background */
+    .main {
+        background-color: #f5f7fa;
+    }
 
-    st.write("Welcome to the Data Alchemists Analytics Platform!")
+    /* Main Title */
+    .title {
+        font-size: 40px;
+        font-weight: 700;
+        color: #1a3c6e;
+        margin-bottom: -8px;
+    }
 
+    /* Subtitle */
+    .subtitle {
+        font-size: 18px;
+        color: #44546A;
+        margin-bottom: 6px;
+    }
 
-# ==========================
-# MAIN HOMEPAGE CONTENT
-# ==========================
+    /* Team line */
+    .teamline {
+        font-size: 15px;
+        color: #666666;
+        margin-bottom: 24px;
+    }
+
+    /* ------------------------------------------------------ */
+    /* LIGHT RED SIDEBAR THEME                                */
+    /* ------------------------------------------------------ */
+
+    section[data-testid="stSidebar"] {
+        background-color: #FFD6D6 !important;   /* soft light red */
+        color: #4A0000 !important;              /* dark red text */
+    }
+
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] label {
+        color: #4A0000 !important;
+    }
+
+    section[data-testid="stSidebar"] hr {
+        border-color: #FFBABA !important;       /* soft pink divider */
+    }
+
+    /* Footer */
+    .footer-text {
+        text-align: center;
+        padding: 20px;
+        font-size: 13px;
+        color: #8a8a8a;
+        margin-top: 40px;
+    }
+
+</style>
+""", unsafe_allow_html=True)
+
+# ----------------------------------------------------
+# HEADER (MAIN TITLE SECTION)
+# ----------------------------------------------------
 st.markdown(
-    """
-    <h1 style='text-align:center; color:#8b0000;'>
-        📊 Data Alchemists Analytics Platform
-    </h1>
-    """,
-    unsafe_allow_html=True
+    "<div class='title'>Data Alchemists Analytics Platform</div>",
+    unsafe_allow_html=True,
 )
 
-# Show logo on homepage
-if logo:
-    st.image(logo, width=200)
+st.markdown(
+    "<div class='subtitle'>Advanced analytics on YMCA hold behavior, revenue impact, and member value.</div>",
+    unsafe_allow_html=True,
+)
 
 st.markdown(
+    "<div class='teamline'>Created by <b>Data Alchemists</b> • CMPT 3830 Machine Learning Work Integrated Project</div>",
+    unsafe_allow_html=True,
+)
+
+st.markdown("---")
+
+# ----------------------------------------------------
+# EXECUTIVE SUMMARY / HOME CONTENT
+# ----------------------------------------------------
+
+left, right = st.columns([2, 1])
+
+with left:
+    st.markdown("### 🧭 Project Problem Focus")
+    st.write(
+        """
+We analyze YMCA membership **hold behavior** to answer three strategic questions:
+
+1. **How do hold frequency and duration impact YMCA revenue and cash flow?**  
+2. **Which behavior clusters create the highest financial risk?**  
+3. **What policy recommendations reduce revenue leakage while maintaining fairness?**
+
+Use the sidebar to explore:
+
+- 📂 Data Foundation & Quality Check  
+- 📊 Revenue & Hold Behaviour Insights  
+- 🧩 Behaviour Segmentation Explorer  
+
+(Upcoming advanced modules)  
+- 💰 Revenue Impact Modeling  
+- ⚖️ Policy Scenario Simulator  
+- 🔮 Predictive Churn Analysis  
+        """
+    )
+
+with right:
+    st.markdown("### 📌 How to Use This Platform")
+    st.write(
+        """
+- Start with **Data Foundation**  
+- Move to **Revenue Insights**  
+- Explore **Segmentation Explorer**  
+- Use insights for policy + decision-making  
+        """
+    )
+
+st.markdown("---")
+
+# ----------------------------------------------------
+# FOOTER
+# ----------------------------------------------------
+st.markdown(
     """
-    <p style='font-size:18px; text-align:center; color:#444;'>
-        Turning raw YMCA data into actionable financial insights.
-    </p>
+    <div class="footer-text">
+        Data Alchemists • YMCA Hold Analytics Platform • 2025
+    </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
