@@ -6,26 +6,24 @@ st.title("📄 Data Overview")
 
 @st.cache_data
 def load_data():
-    # Get folder where THIS file exists → /ymca_app/pages
     here = Path(__file__).resolve()
-    
-    # Go up to parent folder → /ymca_app
-    base_dir = here.parent.parent
-    
-    # CSV file path
-    csv_path = base_dir / "ymca_clusters.csv"
+    base_dir = here.parent.parent  # ymca_app folder
+    excel_path = base_dir / "ymca_clusters.xlsx"
 
-    st.write("📌 Using CSV path:", csv_path)
+    st.write("📌 Using Excel path:", str(excel_path))
 
-    return pd.read_csv(csv_path)
+    df = pd.read_excel(excel_path, engine="openpyxl")
 
-# Load
+    # Convert dates
+    if "start_date" in df.columns:
+        df["start_date"] = pd.to_datetime(df["start_date"], errors="coerce")
+
+    return df
+
 df = load_data()
 
-# Display preview
-st.write("### Sample Data Preview")
+st.write("### Sample Data")
 st.dataframe(df.head())
 
-# Dataset stats
-st.write(f"📊 **Total Rows:** {len(df)}")
-st.write(f"📁 **Total Columns:** {df.shape[1]}")
+st.write(f"📊 Rows: {len(df)}")
+st.write(f"📁 Columns: {df.shape[1]}")
