@@ -1,114 +1,144 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from pathlib import Path
-
-st.set_page_config(layout="wide")
 
 # -----------------------------
-# Load Excel Dataset
+# Page Config
+# -----------------------------
+st.set_page_config(
+    page_title="Cluster Explorer | Data Alchemists",
+    layout="wide",
+)
+
+st.title("🔍 Cluster Explorer")
+
+# -----------------------------
+# Load Excel
 # -----------------------------
 @st.cache_data
 def load_data():
-    here = Path(__file__).resolve()
-    base = here.parent.parent
-    file_path = base / "ymca_clusters.xlsx"
-    return pd.read_excel(file_path)
+    df = pd.read_excel("ymca_clusters.xlsx")
+    return df
 
 df = load_data()
 
-# -----------------------------
-# Page Title
-# -----------------------------
-st.markdown("""
-<h1 style='color:#8A0303;'>🔍 Cluster Explorer</h1>
-<p style='font-size:18px;'>Explore behavioral and financial characteristics of each cluster.</p>
-""", unsafe_allow_html=True)
+st.success("📌 Excel Loaded Successfully")
+st.write(f"### Columns in dataset:")
+st.code(list(df.columns))
 
 # -----------------------------
-# Validate cluster column
+# Identify cluster column
 # -----------------------------
-if "cluster_label" not in df.columns:
-    st.error("❌ The file is missing 'cluster_label' column. Cannot explore clusters.")
-    st.write("Available columns:", list(df.columns))
+cluster_col = None
+possible = ["cluster_label", "cluster", "cluster_name"]
+
+for col in df.columns:
+    if col.lower() in possible:
+        cluster_col = col
+        break
+
+if not cluster_col:
+    st.error("❌ No cluster column found in the file.")
     st.stop()
 
-clusters = sorted(df["cluster_label"].unique())
-cluster_choice = st.selectbox("Select a Cluster", clusters)
-
-filtered = df[df["cluster_label"] == cluster_choice]
-
-st.markdown(f"## 📊 Cluster {cluster_choice} Summary")
+st.success(f"🎯 Cluster Column Detected: **{cluster_col}**")
 
 # -----------------------------
-# 1️⃣ Summary Metrics
+# Sidebar Cluster Filter
 # -----------------------------
-c1, c2, c3, c4 = st.columns(4)
+clusters = sorted(df[cluster_col].unique())
+cluster_choice = st.selectbox("Select Cluster:", clusters)
 
-with c1:
-    st.metric("Total Members", len(filtered))
+filtered = df[df[cluster_col] == cluster_choice]
 
-with c2:
-    st.metric("Avg Membership Fee", round(filtered["membership_fee"].mean(), 2))
+st.subheader(f"📊 Cluster {cluster_choice} Summary")
 
-with c3:
-    st.metric("Avg Hold Duration (Days)", round(filtered["hold_duration_days"].mean(), 2))
-
-with c4:
-    st.metric("Avg Revenue Loss", round(filtered["fee_loss"].mean(), 2))
+st.write("### Filtered Data Preview")
+st.dataframe(filtered.head(50), use_container_width=True)
 
 # -----------------------------
-# 2️⃣ Select Numeric Column for Visualization
+# Numeric Summary
 # -----------------------------
-numeric_cols = ["membership_fee", "hold_duration_days", "fee_loss", "age_at_hold"]
-num_col = st.selectbox("Choose numeric field to visualize:", numeric_cols)
+numeric_cols = filtered.select_dtypes(include=["float64", "int64"]).columns.tolist()
 
-# Histogram
-fig1 = px.histogram(filtered, x=num_col, nbins=30,
-                    title=f"Distribution of {num_col} for Cluster {cluster_choice}",
-                    color_discrete_sequence=["#8A0303"])
-st.plotly_chart(fig1, use_container_width=True)
+if len(numeric_cols) > 0:
+    st.write("### 📈 Numeric Feature Summary")
+    st.dataframe(filtered[numeric_cols].describe(), use_container_width=True)
+else:
+    st.warning("⚠️ No numeric columns found!")
 
 # -----------------------------
-# 3️⃣ Categorical Column Breakdown
+# Category Breakdown (Bar Chart)
 # -----------------------------
-categorical_cols = [
-    "membership_location",
-    "application_package_category",
-    "application_subscription_membership_type",
-    "reason_for_hold",
-    "application_contact_age_category",
-    "application_contact_gender",
-    "hold_duration_group",
-    "cluster_name"
-]
+st.write("---")
+st.write("## 📊 Category Breakdown")
 
-cat_col = st.selectbox("Break down by category:", categorical_cols)
+all_cat_cols = filtered.select_dtypes(include=["object"]).columns.tolist()
+selected_cat = st.selectbox("Break down by category:", all_cat_cols)
 
-fig2 = px.bar(
-    filtered[cat_col].value_counts().reset_index(),
-    x="index", y=cat_col,
-    title=f"{cat_col} Distribution – Cluster {cluster_choice}",
+# ---- FIXED BAR CHART CODE ----
+cat_counts = (
+    filtered[selected_cat]
+    .fillna("Unknown")
+    .astype(str)
+    .value_counts()
+    .reset_index()
+)
+
+cat_counts.columns = ["category", "count"]
+
+fig = px.bar(
+    cat_counts,
+    x="category",
+    y="count",
+    title=f"{selected_cat} Distribution – Cluster {cluster_choice}",
     color_discrete_sequence=["#AA2B2B"]
 )
-fig2.update_layout(xaxis_title=cat_col, yaxis_title="Count")
-st.plotly_chart(fig2, use_container_width=True)
+fig.update_layout(
+    xaxis_title=selected_cat,
+    yaxis_title="Count",
+    xaxis={'categoryorder':'total descending'}
+)
+
+st.plotly_chart(fig, use_container_width=True)
 
 # -----------------------------
-# 4️⃣ Revenue Scatter (Fee vs Loss)
+# Numeric Visualizer
 # -----------------------------
-fig3 = px.scatter(
-    filtered, x="membership_fee", y="fee_loss",
-    color="hold_duration_group",
-    size="hold_duration_days",
-    title="💸 Fee vs Revenue Loss (Bubble Shows Hold Days)",
-    color_discrete_sequence=px.colors.sequential.OrRd
+st.write("---")
+st.write("## 📈 Numeric Feature Visualizer")
+
+if len(numeric_cols) >= 2:
+    num_x = st.selectbox("Select X-Axis:", numeric_cols, key="x_axis")
+    num_y = st.selectbox("Select Y-Axis:", numeric_cols, key="y_axis")
+
+    fig2 = px.scatter(
+        filtered,
+        x=num_x,
+        y=num_y,
+        color_discrete_sequence=["#AA2B2B"],
+        title=f"{num_x} vs {num_y} (Cluster {cluster_choice})",
+    )
+
+    st.plotly_chart(fig2, use_container_width=True)
+else:
+    st.warning("⚠️ Not enough numeric columns for scatter plot.")
+
+# -----------------------------
+# Histogram Section
+# -----------------------------
+st.write("---")
+st.write("## 📊 Numeric Histogram")
+
+num_hist = st.selectbox("Select numeric column:", numeric_cols)
+
+fig3 = px.histogram(
+    filtered,
+    x=num_hist,
+    nbins=25,
+    color_discrete_sequence=["#AA2B2B"],
+    title=f"Histogram of {num_hist}"
 )
 st.plotly_chart(fig3, use_container_width=True)
 
-# -----------------------------
-# 5️⃣ Raw Data Preview
-# -----------------------------
-st.markdown("## 🧾 Filtered Dataset Preview")
-st.dataframe(filtered.head(50))
-
+# End
