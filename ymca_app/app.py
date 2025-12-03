@@ -11,6 +11,20 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------
+# SIDEBAR BRANDING (Header inside sidebar)
+# ----------------------------------------------------
+with st.sidebar:
+    st.markdown("""
+        <h2 style='font-weight:700; margin-bottom:0px; color:#4A0000;'>
+            Data Alchemists<br>Analytics Platform
+        </h2>
+        <p style='font-size:14px; margin-top:2px; margin-bottom:5px; color:#4A0000;'>
+            YMCA Revenue Intelligence Dashboard
+        </p>
+        <hr style='margin:10px 0 20px 0; border-color:#FFBABA;'>
+    """, unsafe_allow_html=True)
+
+# ----------------------------------------------------
 # GLOBAL STYLING (CSS)
 # ----------------------------------------------------
 st.markdown("""
@@ -47,15 +61,26 @@ st.markdown("""
         margin-bottom: 24px;
     }
 
-    /* Sidebar styling */
+    /* ------------------------------------------------------ */
+    /* LIGHT RED SIDEBAR THEME                                */
+    /* ------------------------------------------------------ */
+
     section[data-testid="stSidebar"] {
-        background-color: #1a3c6e;
-        color: white;
+        background-color: #FFD6D6 !important;   /* soft light red */
+        color: #4A0000 !important;              /* dark red text */
     }
-    section[data-testid="stSidebar"] h1, 
-    section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] h3 {
-        color: white;
+
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] label {
+        color: #4A0000 !important;
+    }
+
+    section[data-testid="stSidebar"] hr {
+        border-color: #FFBABA !important;       /* soft pink divider */
     }
 
     /* Footer */
@@ -100,20 +125,22 @@ with left:
     st.markdown("### 🧭 Project Problem Focus")
     st.write(
         """
-We analyse YMCA membership **hold behaviour** to answer key strategic questions:
+We analyze YMCA membership **hold behavior** to answer three strategic questions:
 
 1. **How do hold frequency and duration impact YMCA revenue and cash flow?**  
-2. **Which behavioral segments (clusters) produce the highest financial risk?**  
-3. **What policy recommendations can reduce revenue leakage while staying member-friendly?**
+2. **Which behavior clusters create the highest financial risk?**  
+3. **What policy recommendations reduce revenue leakage while maintaining fairness?**
 
-Navigate using the sidebar to explore:
-- **📂 Data Foundation & Quality Check**  
-- **📊 Revenue & Hold Behaviour Insights**  
-- **🧩 Behaviour Segmentation Explorer**  
-- Future Add-Ons:  
-  - 💰 Revenue Impact Modeling  
-  - ⚖️ Policy Scenario Simulator  
-  - 🔮 Predictive Churn Analysis  
+Use the sidebar to explore:
+
+- 📂 Data Foundation & Quality Check  
+- 📊 Revenue & Hold Behaviour Insights  
+- 🧩 Behaviour Segmentation Explorer  
+
+(Upcoming advanced modules)  
+- 💰 Revenue Impact Modeling  
+- ⚖️ Policy Scenario Simulator  
+- 🔮 Predictive Churn Analysis  
         """
     )
 
@@ -121,10 +148,10 @@ with right:
     st.markdown("### 📌 How to Use This Platform")
     st.write(
         """
-- Start with **Data Foundation** to understand the dataset.  
-- Explore **Revenue Insights** for financial impact.  
-- Use **Segmentation Explorer** to deep-dive into member groups.  
-- Apply insights for **policy, strategy, and operations decisions**.
+- Start with **Data Foundation**  
+- Move to **Revenue Insights**  
+- Explore **Segmentation Explorer**  
+- Use insights for policy + decision-making  
         """
     )
 
