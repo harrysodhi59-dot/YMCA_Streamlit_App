@@ -11,15 +11,16 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.write("Explore the cleaned & clustered YMCA dataset, check data quality, and slice by key dimensions.")
+
 # ==========================
 # LOAD DATA
 # ==========================
 @st.cache_data
 def load_data():
     here = Path(__file__).resolve()
-    base_dir = here.parent.parent
+    base_dir = here.parent.parent        # ymca_app/
     excel_path = base_dir / "ymca_clusters.xlsx"
-
     df = pd.read_excel(excel_path, engine="openpyxl")
 
     # Convert date column if present
@@ -30,201 +31,204 @@ def load_data():
 
 df = load_data()
 
-# Detect cluster column if present
+# Detect cluster column
 cluster_col = None
 for c in df.columns:
-    if "cluster" in c.lower():
+    if "cluster_label" in c.lower() or "cluster" in c.lower():
         cluster_col = c
         break
 
 # ==========================
-# FILTERS SECTION
+# DATA DICTIONARY / SCHEMA
+# ==========================
+st.markdown("### 📑 Data Dictionary")
+
+# Build schema table
+schema = pd.DataFrame({
+    "Column": df.columns,
+    "Datatype": df.dtypes.astype(str),
+    "Non-Null Count": df.notnull().sum().values,
+    "Missing Count": df.isnull().sum().values,
+    "Missing %": (df.isnull().sum().values / len(df) * 100).round(2),
+    "Unique Values": [df[col].nunique() for col in df.columns],
+    "Example Value": [df[col].dropna().iloc[0] if df[col].notna().any() else "" for col in df.columns]
+})
+
+# Column search
+search_term = st.text_input("🔎 Search column name (optional):", "")
+
+if search_term.strip():
+    schema_filtered = schema[schema["Column"].str.contains(search_term.strip(), case=False, na=False)]
+else:
+    schema_filtered = schema
+
+st.dataframe(schema_filtered, use_container_width=True)
+
+st.markdown("<hr>", unsafe_allow_html=True)
+
+# ==========================
+# FILTERS
 # ==========================
 st.markdown("### 🎛 Interactive Filters")
 
 with st.expander("Click to expand filters", expanded=True):
-    col_f1, col_f2, col_f3 = st.columns(3)
-    col_f4, col_f5, col_f6 = st.columns(3)
+    f1, f2, f3 = st.columns(3)
+    f4, f5, f6 = st.columns(3)
 
-    # Location filter
+    # Location
     if "membership_location" in df.columns:
-        locations = sorted(df["membership_location"].dropna().unique().tolist())
-        loc_sel = col_f1.multiselect(
-            "Membership Location",
-            options=locations,
-            default=locations
-        )
+        loc_opts = sorted(df["membership_location"].dropna().unique().tolist())
+        loc_sel = f1.multiselect("Membership Location", loc_opts, default=loc_opts)
     else:
         loc_sel = None
 
     # Package category
     if "application_package_category" in df.columns:
-        pkg = sorted(df["application_package_category"].dropna().unique().tolist())
-        pkg_sel = col_f2.multiselect(
-            "Package Category",
-            options=pkg,
-            default=pkg
-        )
+        pkg_opts = sorted(df["application_package_category"].dropna().unique().tolist())
+        pkg_sel = f2.multiselect("Package Category", pkg_opts, default=pkg_opts)
     else:
         pkg_sel = None
 
     # Membership type
     if "application_subscription_membership_type" in df.columns:
-        mtypes = sorted(df["application_subscription_membership_type"].dropna().unique().tolist())
-        mtype_sel = col_f3.multiselect(
-            "Membership Type",
-            options=mtypes,
-            default=mtypes
-        )
+        mtype_opts = sorted(df["application_subscription_membership_type"].dropna().unique().tolist())
+        mtype_sel = f3.multiselect("Membership Type", mtype_opts, default=mtype_opts)
     else:
         mtype_sel = None
 
     # Age category
     if "application_contact_age_category" in df.columns:
-        ages = sorted(df["application_contact_age_category"].dropna().unique().tolist())
-        age_sel = col_f4.multiselect(
-            "Age Category",
-            options=ages,
-            default=ages
-        )
+        age_opts = sorted(df["application_contact_age_category"].dropna().unique().tolist())
+        age_sel = f4.multiselect("Age Category", age_opts, default=age_opts)
     else:
         age_sel = None
 
     # Reason for hold
     if "reason_for_hold" in df.columns:
-        reasons = sorted(df["reason_for_hold"].dropna().unique().tolist())
-        reason_sel = col_f5.multiselect(
-            "Reason for Hold",
-            options=reasons,
-            default=reasons
-        )
+        reason_opts = sorted(df["reason_for_hold"].dropna().unique().tolist())
+        reason_sel = f5.multiselect("Reason for Hold", reason_opts, default=reason_opts)
     else:
         reason_sel = None
 
-    # Cluster filter
+    # Cluster
     if cluster_col is not None:
-        clusters = sorted(df[cluster_col].dropna().unique().tolist())
-        cluster_sel = col_f6.multiselect(
-            "Cluster",
-            options=clusters,
-            default=clusters
-        )
+        cluster_opts = sorted(df[cluster_col].dropna().unique().tolist())
+        cluster_sel = f6.multiselect("Cluster", cluster_opts, default=cluster_opts)
     else:
         cluster_sel = None
 
-    # Date range filter
+    # Date range
     date_range = None
-    if "start_date" in df.columns:
-        min_date = df["start_date"].dropna().min()
-        max_date = df["start_date"].dropna().max()
-        if pd.notna(min_date) and pd.notna(max_date):
-            date_range = st.date_input(
-                "Filter by Start Date Range",
-                value=(min_date.date(), max_date.date())
-            )
+    if "start_date" in df.columns and df["start_date"].notna().any():
+        min_date = df["start_date"].min().date()
+        max_date = df["start_date"].max().date()
+        date_range = st.date_input(
+            "Filter by Start Date Range",
+            value=(min_date, max_date)
+        )
 
-# Apply filters
-filtered_df = df.copy()
+# Apply filters to dataframe
+df_filt = df.copy()
 
-if loc_sel is not None and len(loc_sel) > 0:
-    filtered_df = filtered_df[filtered_df["membership_location"].isin(loc_sel)]
+if loc_sel is not None:
+    df_filt = df_filt[df_filt["membership_location"].isin(loc_sel)]
 
-if pkg_sel is not None and len(pkg_sel) > 0:
-    filtered_df = filtered_df[filtered_df["application_package_category"].isin(pkg_sel)]
+if pkg_sel is not None:
+    df_filt = df_filt[df_filt["application_package_category"].isin(pkg_sel)]
 
-if mtype_sel is not None and len(mtype_sel) > 0:
-    filtered_df = filtered_df[filtered_df["application_subscription_membership_type"].isin(mtype_sel)]
+if mtype_sel is not None:
+    df_filt = df_filt[df_filt["application_subscription_membership_type"].isin(mtype_sel)]
 
-if age_sel is not None and len(age_sel) > 0:
-    filtered_df = filtered_df[filtered_df["application_contact_age_category"].isin(age_sel)]
+if age_sel is not None:
+    df_filt = df_filt[df_filt["application_contact_age_category"].isin(age_sel)]
 
-if reason_sel is not None and len(reason_sel) > 0:
-    filtered_df = filtered_df[filtered_df["reason_for_hold"].isin(reason_sel)]
+if reason_sel is not None:
+    df_filt = df_filt[df_filt["reason_for_hold"].isin(reason_sel)]
 
-if cluster_sel is not None and len(cluster_sel) > 0 and cluster_col is not None:
-    filtered_df = filtered_df[filtered_df[cluster_col].isin(cluster_sel)]
+if cluster_sel is not None and cluster_col is not None:
+    df_filt = df_filt[df_filt[cluster_col].isin(cluster_sel)]
 
 if date_range is not None and "start_date" in df.columns:
     start_d, end_d = date_range
-    filtered_df = filtered_df[
-        (filtered_df["start_date"].dt.date >= start_d) &
-        (filtered_df["start_date"].dt.date <= end_d)
+    df_filt = df_filt[
+        (df_filt["start_date"].dt.date >= start_d) &
+        (df_filt["start_date"].dt.date <= end_d)
     ]
 
-st.write(f"📌 Showing **{len(filtered_df):,}** records after filters.")
-
+st.write(f"📌 Showing **{len(df_filt):,}** records after filters.")
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # ==========================
-# KPI CARDS (on filtered data)
+# KPI CARDS (FILTERED)
 # ==========================
 st.markdown("### 🔢 Key Metrics (Filtered Subset)")
 
-col1, col2, col3, col4 = st.columns(4)
+k1, k2, k3, k4 = st.columns(4)
 
-col1.metric("Total Records", f"{len(filtered_df):,}")
-col2.metric("Total Columns", filtered_df.shape[1])
+k1.metric("Total Records", f"{len(df_filt):,}")
 
-if "membership_location" in filtered_df.columns:
-    col3.metric("Unique Locations", filtered_df["membership_location"].nunique())
+if "membership_location" in df_filt.columns:
+    k2.metric("Unique Locations", df_filt["membership_location"].nunique())
 else:
-    col3.metric("Unique Locations", "N/A")
+    k2.metric("Unique Locations", "N/A")
 
-if "application_contact_age_category" in filtered_df.columns:
-    col4.metric("Age Groups", filtered_df["application_contact_age_category"].nunique())
+if "fee_loss" in df_filt.columns:
+    k3.metric("Total Fee Loss", f"${df_filt['fee_loss'].sum():,.0f}")
 else:
-    col4.metric("Age Groups", "N/A")
+    k3.metric("Total Fee Loss", "N/A")
+
+if "hold_duration_days" in df_filt.columns:
+    k4.metric("Avg Hold Duration", f"{df_filt['hold_duration_days'].mean():.1f} days")
+else:
+    k4.metric("Avg Hold Duration", "N/A")
 
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # ==========================
-# SAMPLE PREVIEW
+# SAMPLE PREVIEW (FILTERED)
 # ==========================
 st.markdown("### 🧾 Sample Data Preview (Filtered)")
-st.dataframe(filtered_df.head(20), use_container_width=True)
+st.dataframe(df_filt.head(20), use_container_width=True)
 
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # ==========================
-# MISSING VALUE ANALYSIS (FULL DATASET)
+# MISSING VALUE HEATMAP (TOP 200 ROWS)
 # ==========================
-st.markdown("### 🚨 Missing Value Summary (Full Dataset)")
+st.markdown("### 🚨 Missing Value Heatmap (Top 200 Rows)")
 
-missing_df = (
-    df.isnull().sum()
-    .reset_index()
-    .rename(columns={"index": "Column", 0: "Missing Values"})
-)
-missing_df["Missing %"] = round((missing_df["Missing Values"] / len(df)) * 100, 2)
-
-st.dataframe(missing_df, use_container_width=True)
+if len(df) > 0:
+    miss_sample = df.head(200).isnull().astype(int)
+    if miss_sample.sum().sum() == 0:
+        st.success("✅ No missing values in the first 200 rows.")
+    else:
+        fig_miss = px.imshow(
+            miss_sample.T,
+            color_continuous_scale="Reds",
+            aspect="auto",
+            labels=dict(x="Row Index", y="Column", color="Missing"),
+            title="Missing Value Pattern (1 = missing, 0 = present)"
+        )
+        st.plotly_chart(fig_miss, use_container_width=True)
+else:
+    st.info("No data available to show missing value heatmap.")
 
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # ==========================
-# COLUMN DETAILS (FULL DATASET)
-# ==========================
-st.markdown("### 📑 Column Information")
-
-col_info = pd.DataFrame({
-    "Column": df.columns,
-    "Datatype": df.dtypes.astype(str),
-    "Unique Values": [df[col].nunique() for col in df.columns]
-})
-
-st.dataframe(col_info, use_container_width=True)
-
-st.markdown("<hr>", unsafe_allow_html=True)
-
-# ==========================
-# ADVANCED GRAPHS (ON FILTERED DATA)
+# VISUALS ON FILTERED DATA
 # ==========================
 
 # 1. Members by Location
-if "membership_location" in filtered_df.columns:
+if "membership_location" in df_filt.columns:
     st.markdown("### 🏢 Members by Location (Filtered)")
-    loc_counts = filtered_df["membership_location"].value_counts().reset_index()
-    loc_counts.columns = ["Location", "Count"]
+
+    loc_counts = (
+        df_filt["membership_location"]
+        .value_counts()
+        .reset_index()
+        .rename(columns={"index": "Location", "membership_location": "Count"})
+    )
 
     fig_loc = px.bar(
         loc_counts,
@@ -241,10 +245,11 @@ if "membership_location" in filtered_df.columns:
     st.markdown("<hr>", unsafe_allow_html=True)
 
 # 2. Age Category Breakdown
-if "application_contact_age_category" in filtered_df.columns:
+if "application_contact_age_category" in df_filt.columns:
     st.markdown("### 🎂 Age Category Breakdown (Filtered)")
+
     fig_age = px.pie(
-        filtered_df,
+        df_filt,
         names="application_contact_age_category",
         title="Age Distribution",
         color_discrete_sequence=px.colors.sequential.Reds
@@ -254,39 +259,45 @@ if "application_contact_age_category" in filtered_df.columns:
     st.markdown("<hr>", unsafe_allow_html=True)
 
 # 3. Hold Duration Histogram
-if "hold_duration_days" in filtered_df.columns:
+if "hold_duration_days" in df_filt.columns:
     st.markdown("### ⏳ Hold Duration Distribution (Days)")
+
     fig_hold = px.histogram(
-        filtered_df,
+        df_filt,
         x="hold_duration_days",
         nbins=30,
-        title="Distribution of Hold Duration (Days)"
+        title="Distribution of Hold Duration (Days)",
+        color_discrete_sequence=["#8b0000"]
     )
     st.plotly_chart(fig_hold, use_container_width=True)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
 # 4. Membership Fee Distribution
-if "membership_fee" in filtered_df.columns:
+if "membership_fee" in df_filt.columns:
     st.markdown("### 💳 Membership Fee Distribution")
+
     fig_fee = px.box(
-        filtered_df,
+        df_filt,
         y="membership_fee",
-        title="Membership Fee Distribution (Box Plot)"
+        title="Membership Fee Distribution (Box Plot)",
+        points="outliers"
     )
     st.plotly_chart(fig_fee, use_container_width=True)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
 # 5. Fee Loss by Location
-if "fee_loss" in filtered_df.columns and "membership_location" in filtered_df.columns:
+if "fee_loss" in df_filt.columns and "membership_location" in df_filt.columns:
     st.markdown("### 💰 Total Fee Loss by Location")
+
     fee_loc = (
-        filtered_df.groupby("membership_location")["fee_loss"]
+        df_filt.groupby("membership_location")["fee_loss"]
         .sum()
         .reset_index()
         .sort_values("fee_loss", ascending=False)
     )
+
     fig_fee_loc = px.bar(
         fee_loc,
         x="membership_location",
@@ -301,35 +312,12 @@ if "fee_loss" in filtered_df.columns and "membership_location" in filtered_df.co
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
-# 6. Cluster Comparison (Average Fee Loss & Hold Duration)
-if cluster_col is not None and "fee_loss" in filtered_df.columns and "hold_duration_days" in filtered_df.columns:
-    st.markdown("### 🧩 Cluster Comparison (Avg Fee Loss & Hold Duration)")
-
-    cluster_summary = (
-        filtered_df.groupby(cluster_col)[["fee_loss", "hold_duration_days"]]
-        .mean()
-        .reset_index()
-        .round(2)
-    )
-
-    fig_cluster = px.bar(
-        cluster_summary,
-        x=cluster_col,
-        y=["fee_loss", "hold_duration_days"],
-        barmode="group",
-        title="Cluster Comparison: Avg Fee Loss & Hold Duration",
-        labels={"value": "Average", "variable": "Metric"}
-    )
-    st.plotly_chart(fig_cluster, use_container_width=True)
-
-    st.markdown("<hr>", unsafe_allow_html=True)
-
-# 7. Hold Reason vs Age Group
-if "reason_for_hold" in filtered_df.columns and "application_contact_age_category" in filtered_df.columns:
-    st.markdown("### 🧠 Hold Reason by Age Group")
+# 6. Hold Reason vs Age Group
+if "reason_for_hold" in df_filt.columns and "application_contact_age_category" in df_filt.columns:
+    st.markdown("### 🧠 Hold Reason by Age Group (Filtered)")
 
     reason_age = (
-        filtered_df.groupby(["reason_for_hold", "application_contact_age_category"])
+        df_filt.groupby(["reason_for_hold", "application_contact_age_category"])
         .size()
         .reset_index(name="count")
     )
@@ -341,33 +329,39 @@ if "reason_for_hold" in filtered_df.columns and "application_contact_age_categor
         color="application_contact_age_category",
         barmode="group",
         title="Hold Reasons by Age Group",
-        labels={"reason_for_hold": "Reason", "count": "Members", "application_contact_age_category": "Age Group"}
+        labels={
+            "reason_for_hold": "Reason for Hold",
+            "count": "Number of Holds",
+            "application_contact_age_category": "Age Category"
+        }
     )
     fig_reason_age.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_reason_age, use_container_width=True)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
-# 8. Fee Loss vs Hold Duration Scatter (with clusters if available)
-if "fee_loss" in filtered_df.columns and "hold_duration_days" in filtered_df.columns:
-    st.markdown("### 📈 Fee Loss vs Hold Duration")
+# 7. Fee Loss vs Hold Duration Scatter
+if "fee_loss" in df_filt.columns and "hold_duration_days" in df_filt.columns:
+    st.markdown("### 📈 Fee Loss vs Hold Duration (Filtered)")
 
-    if cluster_col is not None:
+    if cluster_col is not None and cluster_col in df_filt.columns:
         fig_scatter = px.scatter(
-            filtered_df,
+            df_filt,
             x="hold_duration_days",
             y="fee_loss",
             color=cluster_col,
             title="Fee Loss vs Hold Duration (Colored by Cluster)",
-            labels={"hold_duration_days": "Hold Duration (Days)", "fee_loss": "Fee Loss"}
+            labels={"hold_duration_days": "Hold Duration (Days)", "fee_loss": "Fee Loss"},
+            opacity=0.7
         )
     else:
         fig_scatter = px.scatter(
-            filtered_df,
+            df_filt,
             x="hold_duration_days",
             y="fee_loss",
             title="Fee Loss vs Hold Duration",
-            labels={"hold_duration_days": "Hold Duration (Days)", "fee_loss": "Fee Loss"}
+            labels={"hold_duration_days": "Hold Duration (Days)", "fee_loss": "Fee Loss"},
+            opacity=0.7
         )
 
     st.plotly_chart(fig_scatter, use_container_width=True)
