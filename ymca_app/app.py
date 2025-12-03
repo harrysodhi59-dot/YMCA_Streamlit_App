@@ -4,7 +4,7 @@ import streamlit as st
 # GLOBAL PAGE CONFIGURATION
 # ----------------------------------------------------
 st.set_page_config(
-    page_title="YMCA Hold Revenue Impact Dashboard | Data Alchemists",
+    page_title="Data Alchemists Analytics Platform",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -20,12 +20,12 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Main page background */
+    /* Page background */
     .main {
         background-color: #f5f7fa;
     }
 
-    /* Title styling */
+    /* Main Title */
     .title {
         font-size: 40px;
         font-weight: 700;
@@ -40,6 +40,7 @@ st.markdown("""
         margin-bottom: 6px;
     }
 
+    /* Team line */
     .teamline {
         font-size: 15px;
         color: #666666;
@@ -70,20 +71,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# HEADER
+# HEADER (MAIN TITLE SECTION)
 # ----------------------------------------------------
 st.markdown(
-    "<div class='title'>YMCA Hold Revenue Impact Dashboard</div>",
+    "<div class='title'>Data Alchemists Analytics Platform</div>",
     unsafe_allow_html=True,
 )
 
 st.markdown(
-    "<div class='subtitle'>Quantifying how hold behaviour impacts member Lifetime Value (LTV) and YMCA revenue.</div>",
+    "<div class='subtitle'>Advanced analytics on YMCA hold behavior, revenue impact, and member value.</div>",
     unsafe_allow_html=True,
 )
 
 st.markdown(
-    "<div class='teamline'>Built by <b>Data Alchemists</b> &bull; CMPT 3830 Machine Learning Work Integrated Project</div>",
+    "<div class='teamline'>Created by <b>Data Alchemists</b> • CMPT 3830 Machine Learning Work Integrated Project</div>",
     unsafe_allow_html=True,
 )
 
@@ -92,35 +93,38 @@ st.markdown("---")
 # ----------------------------------------------------
 # EXECUTIVE SUMMARY / HOME CONTENT
 # ----------------------------------------------------
+
 left, right = st.columns([2, 1])
 
 with left:
-    st.markdown("### 🧭 Problem Focus: Revenue Impact of Holds")
+    st.markdown("### 🧭 Project Problem Focus")
     st.write(
         """
-We analyse **hold behaviour** across YMCA members to answer three key business questions:
+We analyse YMCA membership **hold behaviour** to answer key strategic questions:
 
-1. **How do hold frequency and duration affect revenue and cash flow?**  
-2. **Which member segments (clusters) contribute most to fee loss and risk?**  
-3. **What kind of hold policies can balance member fairness and financial sustainability?**
+1. **How do hold frequency and duration impact YMCA revenue and cash flow?**  
+2. **Which behavioral segments (clusters) produce the highest financial risk?**  
+3. **What policy recommendations can reduce revenue leakage while staying member-friendly?**
 
-Use the pages in the left sidebar to explore:
-
-- **📂 Data Foundation & Quality Check** – cleaned dataset and structure  
-- **📊 Revenue & Hold Behaviour Insights** – key KPIs and trends  
-- **🧩 Behaviour Segmentation Explorer** – clusters of member hold patterns  
-- (Next steps) **💰 Revenue Impact Modeling** & **⚖️ Policy Scenarios**
+Navigate using the sidebar to explore:
+- **📂 Data Foundation & Quality Check**  
+- **📊 Revenue & Hold Behaviour Insights**  
+- **🧩 Behaviour Segmentation Explorer**  
+- Future Add-Ons:  
+  - 💰 Revenue Impact Modeling  
+  - ⚖️ Policy Scenario Simulator  
+  - 🔮 Predictive Churn Analysis  
         """
     )
 
 with right:
-    st.markdown("### 📌 How to Use This Dashboard")
+    st.markdown("### 📌 How to Use This Platform")
     st.write(
         """
 - Start with **Data Foundation** to understand the dataset.  
-- Move to **Revenue & Hold Behaviour** to see high-level trends.  
-- Use **Behaviour Segmentation** to deep–dive into clusters.  
-- Share insights with YMCA stakeholders to guide **policy decisions**.
+- Explore **Revenue Insights** for financial impact.  
+- Use **Segmentation Explorer** to deep-dive into member groups.  
+- Apply insights for **policy, strategy, and operations decisions**.
         """
     )
 
@@ -132,7 +136,7 @@ st.markdown("---")
 st.markdown(
     """
     <div class="footer-text">
-        Data Alchemists • YMCA Hold Revenue Impact • 2025
+        Data Alchemists • YMCA Hold Analytics Platform • 2025
     </div>
     """,
     unsafe_allow_html=True,
