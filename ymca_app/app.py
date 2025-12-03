@@ -4,7 +4,7 @@ import streamlit as st
 # GLOBAL PAGE CONFIGURATION
 # ----------------------------------------------------
 st.set_page_config(
-    page_title="YMCA Hold Analytics Dashboard",
+    page_title="YMCA Hold Revenue Impact Dashboard | Data Alchemists",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -30,14 +30,20 @@ st.markdown("""
         font-size: 40px;
         font-weight: 700;
         color: #1a3c6e;
-        margin-bottom: -10px;
+        margin-bottom: -8px;
     }
 
     /* Subtitle */
     .subtitle {
         font-size: 18px;
         color: #44546A;
-        margin-bottom: 30px;
+        margin-bottom: 6px;
+    }
+
+    .teamline {
+        font-size: 15px;
+        color: #666666;
+        margin-bottom: 24px;
     }
 
     /* Sidebar styling */
@@ -49,17 +55,6 @@ st.markdown("""
     section[data-testid="stSidebar"] h2, 
     section[data-testid="stSidebar"] h3 {
         color: white;
-    }
-
-    /* Metric card custom */
-    .metric-card {
-        padding: 18px;
-        border-radius: 12px;
-        background-color: #ffffff;
-        border: 1px solid #e3e6eb;
-        text-align: center;
-        box-shadow: 0px 2px 4px rgba(0,0,0,0.08);
-        margin-bottom: 20px;
     }
 
     /* Footer */
@@ -75,41 +70,59 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# MAIN HEADER (HOME PAGE DISPLAY)
+# HEADER
 # ----------------------------------------------------
+st.markdown(
+    "<div class='title'>YMCA Hold Revenue Impact Dashboard</div>",
+    unsafe_allow_html=True,
+)
 
-st.markdown("<div class='title'>YMCA Hold Analytics Dashboard</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>Advanced insights on membership holds, clusters, demographics, and revenue risk.</div>", unsafe_allow_html=True)
+st.markdown(
+    "<div class='subtitle'>Quantifying how hold behaviour impacts member Lifetime Value (LTV) and YMCA revenue.</div>",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    "<div class='teamline'>Built by <b>Data Alchemists</b> &bull; CMPT 3830 Machine Learning Work Integrated Project</div>",
+    unsafe_allow_html=True,
+)
 
 st.markdown("---")
 
 # ----------------------------------------------------
-# HOME PAGE CONTENT
+# EXECUTIVE SUMMARY / HOME CONTENT
 # ----------------------------------------------------
-st.markdown("### 📌 Welcome to the YMCA Analytics Platform")
+left, right = st.columns([2, 1])
 
-st.write(
-    """
-This dashboard provides interactive insights into YMCA membership hold patterns, 
-cluster behaviors, demographics, fee loss, and operational metrics.
+with left:
+    st.markdown("### 🧭 Problem Focus: Revenue Impact of Holds")
+    st.write(
+        """
+We analyse **hold behaviour** across YMCA members to answer three key business questions:
 
-Use the **left sidebar** to navigate through:
-- **📄 Data Overview**  
-- **📊 Insights Summary**  
-- **🔍 Cluster Explorer**  
-- **📊 Cluster Comparison Dashboard** (optional)  
-- **⏳ Hold Duration Analysis** (optional)  
-- **📈 Trends & Forecasts** (optional)
+1. **How do hold frequency and duration affect revenue and cash flow?**  
+2. **Which member segments (clusters) contribute most to fee loss and risk?**  
+3. **What kind of hold policies can balance member fairness and financial sustainability?**
 
-The system reads the cleaned and clustered dataset directly from Excel and updates all visualizations automatically.
-"""
-)
+Use the pages in the left sidebar to explore:
 
-# ----------------------------------------------------
-# OPTIONAL: Add quick KPI cards on Home Page
-# (You can enable this once df loading is added here)
-# ----------------------------------------------------
-st.markdown("### 🚀 Start by selecting a page from the sidebar")
+- **📂 Data Foundation & Quality Check** – cleaned dataset and structure  
+- **📊 Revenue & Hold Behaviour Insights** – key KPIs and trends  
+- **🧩 Behaviour Segmentation Explorer** – clusters of member hold patterns  
+- (Next steps) **💰 Revenue Impact Modeling** & **⚖️ Policy Scenarios**
+        """
+    )
+
+with right:
+    st.markdown("### 📌 How to Use This Dashboard")
+    st.write(
+        """
+- Start with **Data Foundation** to understand the dataset.  
+- Move to **Revenue & Hold Behaviour** to see high-level trends.  
+- Use **Behaviour Segmentation** to deep–dive into clusters.  
+- Share insights with YMCA stakeholders to guide **policy decisions**.
+        """
+    )
 
 st.markdown("---")
 
@@ -119,7 +132,7 @@ st.markdown("---")
 st.markdown(
     """
     <div class="footer-text">
-        Built by Team CMPT 3830 • YMCA Holdings Analytics • 2025
+        Data Alchemists • YMCA Hold Revenue Impact • 2025
     </div>
     """,
     unsafe_allow_html=True,
