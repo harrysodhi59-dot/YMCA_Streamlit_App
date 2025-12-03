@@ -17,7 +17,7 @@ st.title("🔍 Cluster Explorer")
 # -----------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_excel("ymca_clusters.xlsx")
+    df = pd.read_excel("ymca_app/ymca_clusters.xlsx")
     return df
 
 df = load_data()
