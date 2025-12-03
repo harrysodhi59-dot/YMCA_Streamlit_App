@@ -1,54 +1,49 @@
 import streamlit as st
 import pandas as pd
 from pathlib import Path
+import plotly.express as px
 
-st.title("🔍 Cluster Explorer")
+st.title("📄 Data Overview")
 
+# ------------ LOAD DATA ------------
 @st.cache_data
 def load_data():
     here = Path(__file__).resolve()
     base_dir = here.parent.parent
-    excel_path = base_dir / "ymca_clusters.xlsx"
+    file_path = base_dir / "ymca_clusters.xlsx"
 
-    st.write("📌 Using Excel path:", str(excel_path))
-
-    df = pd.read_excel(excel_path, engine="openpyxl")
-
-    # convert date column
+    df = pd.read_excel(file_path, engine="openpyxl")
     if "start_date" in df.columns:
         df["start_date"] = pd.to_datetime(df["start_date"], errors="coerce")
-
     return df
 
 df = load_data()
 
-# Automatically find cluster column
-cluster_col = None
-for col in df.columns:
-    if "cluster" in col.lower():
-        cluster_col = col
-        break
+# ------------ KPIs ------------
+st.markdown("### **📊 Dataset Summary**")
+col1, col2, col3, col4 = st.columns(4)
 
-if cluster_col is None:
-    st.error("❌ No cluster column found in this Excel file.")
-    st.stop()
+col1.metric("Total Records", f"{len(df):,}")
+col2.metric("Locations", df["membership_location"].nunique())
+col3.metric("Package Types", df["application_package_category"].nunique())
+col4.metric("Clusters", df["cluster_label"].nunique())
 
-st.success(f"🎯 Cluster Column Detected: **{cluster_col}**")
+st.markdown("---")
 
-# Dropdown for cluster selection
-cluster_options = sorted(df[cluster_col].unique())
-selected_cluster = st.selectbox("Select Cluster", cluster_options)
+# ------------ PREVIEW ------------
+st.subheader("🔍 Sample Data")
+st.dataframe(df.head(20), use_container_width=True)
 
-filtered = df[df[cluster_col] == selected_cluster]
+# ------------ LOCATION DISTRIBUTION ------------
+st.subheader("🏢 Members by Location")
+loc_counts = df["membership_location"].value_counts().reset_index()
+loc_counts.columns = ["location", "count"]
+fig = px.bar(loc_counts, x="location", y="count", title="Membership Distribution by Location")
+fig.update_layout(xaxis_tickangle=-45)
+st.plotly_chart(fig, use_container_width=True)
 
-st.write("### 📄 Filtered Data Preview")
-st.dataframe(filtered.head())
-
-# Show numeric columns for charts
-numeric_cols = filtered.select_dtypes(include=['int64', 'float64']).columns.tolist()
-
-if len(numeric_cols) == 0:
-    st.warning("⚠️ No numeric columns available for visualization.")
-else:
-    st.write("### 📊 Statistics")
-    st.write(filtered[numeric_cols].describe())
+# ------------ AGE GROUP ------------
+if "application_contact_age_category" in df.columns:
+    st.subheader("🎂 Age Category Breakdown")
+    fig_age = px.pie(df, names="application_contact_age_category", title="Age Segment Distribution")
+    st.plotly_chart(fig_age, use_container_width=True)
