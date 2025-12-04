@@ -1,14 +1,14 @@
 from PIL import Image
 import os
 
-# ---------- LOAD YMCA LOGO IN SIDEBAR ----------
 logo_path = os.path.join(os.path.dirname(__file__), "assets", "ymca_logo.png")
 
 try:
     logo = Image.open(logo_path)
     st.sidebar.image(logo, use_column_width=True)
 except:
-    st.sidebar.write("")  # no crash if logo missing
+    st.sidebar.write("")  # no crash if missing
+
 import streamlit as st
 
 # ----------------------------------------------------
